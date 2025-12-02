@@ -3,7 +3,7 @@
 #include <time.h>
 #include <locale.h>
 
-// Difine o tamanho máximo da fila
+// Define o tamanho máximo da fila
 #define MAX_FILA 5
 
 // Criando as estruturas Peça e Fila
@@ -57,19 +57,22 @@ int main() {
 
         switch (opcao) {
             case 1:
-                dequeue(&f, &pecaRemovida);
-                if (f.total >= 0) {
+            if (!filaVazia(&f)) {
+                    dequeue(&f, &pecaRemovida);
                     printf("Peça [%c, %d] jogada!\n", pecaRemovida.tipo, pecaRemovida.id);
+                } else { 
+                    printf("Fila vazia! Não não há peças para jogar.\n");
                 }
                 mostrarFila(&f);
                 break;
             case 2:
-                enqueue(&f, gerarPeca());
+                Peca novaPeca = gerarPeca();
+                enqueue(&f, novaPeca);
                 mostrarFila(&f);
                 break;
             case 0:
                 printf("\nSaindo do jogo...");
-                printf("Até logo!");
+                printf("Até logo!\n");
                 break;
             default:
                 printf("Opção inválida! Tente novamente.\n");
@@ -97,7 +100,7 @@ int filaVazia(Fila *f) {
 
 void enqueue(Fila *f, Peca p) {
     if (filaCheia(f)) {
-        printf("Fila cheia! Não é possível inserir.\n");
+        printf("Fila cheia! Não é possível adicionar nova peça.\n");
         return;
     }
 
@@ -108,7 +111,6 @@ void enqueue(Fila *f, Peca p) {
 
 void dequeue(Fila *f, Peca *p) {
     if (filaVazia(f)) {
-        printf("Fila vazia! Não é possível remover.\n");
         return;
     }
 
