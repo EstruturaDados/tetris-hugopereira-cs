@@ -3,8 +3,9 @@
 #include <time.h>
 #include <locale.h>
 
-// Define o tamanho máximo da fila
+// Define o tamanho máximo da fila e da pilha
 #define MAX_FILA 5
+#define MAX_PILHA 3
 
 // Criando as estruturas Peça e Fila
 typedef struct {
@@ -19,6 +20,12 @@ typedef struct {
     int total;
 } Fila;
 
+typedef struct {
+    Peca itens[MAX_PILHA];
+    int topo;
+} Pilha;
+
+
 // Protótipos das Funções
 void inicializarFila(Fila *f);
 int filaCheia(Fila *f);
@@ -28,6 +35,13 @@ void dequeue(Fila *f, Peca *p);
 void mostrarFila(Fila *f);
 Peca gerarPeca();
 
+void inicializarPilha(Pilha *p);
+int pilhaVazia(Pilha *p);
+int pilhaCheia(Pilha *p);
+void push(Pilha *p, Peca nova);
+void pop(Pilha *p, Peca *removida);
+void mostrarPilha(Pilha *p);
+
 
 int main() {
     srand(time(NULL));
@@ -36,20 +50,27 @@ int main() {
     Fila f;
     inicializarFila(&f);
 
+    Pilha p;
+    inicializarPilha(&p);
+
     // Preencher com 5 peças
     for (int i = 0; i < MAX_FILA; i++) {
         enqueue(&f, gerarPeca());
     }
 
     int opcao;
-    Peca pecaRemovida;
+    Peca pecaRemovidaFila;
+    Peca pecaReservada;
+    Peca pecaRemovidaPilha;
 
     do {
         printf("\n=============================================================\n");
         printf("--- TETRIS STACK - MENU PRINCIPAL ---\n");
         mostrarFila(&f);
-        printf("1. Jogar Nova Peça\n");
-        printf("2. Inserir Nova Peça\n");
+        mostrarPilha(&p);
+        printf("1. Jogar Peça\n");
+        printf("2. Reservar Peça\n");
+        printf("3. Usar Peça Reservada\n");
         printf("0. Sair\n");
         printf("=============================================================\n");
         printf("Escolha uma opção: ");
@@ -57,18 +78,26 @@ int main() {
 
         switch (opcao) {
             case 1:
-            if (!filaVazia(&f)) {
-                    dequeue(&f, &pecaRemovida);
-                    printf("Peça [%c, %d] jogada!\n", pecaRemovida.tipo, pecaRemovida.id);
-                } else { 
-                    printf("Fila vazia! Não não há peças para jogar.\n");
-                }
+                dequeue(&f, &pecaRemovidaFila);
+                printf("Peça [%c, %d] jogada!\n", pecaRemovidaFila.tipo, pecaRemovidaFila.id);
+                enqueue(&f, gerarPeca());
                 mostrarFila(&f);
+                mostrarPilha(&p);
                 break;
             case 2:
-                Peca novaPeca = gerarPeca();
-                enqueue(&f, novaPeca);
+                if (!pilhaCheia(&p)) {
+                    dequeue(&f, &pecaReservada);
+                    enqueue(&f, gerarPeca());
+                    printf("Peça [%c, %d] reservada!\n", pecaReservada.tipo, pecaReservada.id);
+                }
+                push(&p, pecaReservada);
                 mostrarFila(&f);
+                mostrarPilha(&p);
+                break;
+            case 3:
+                pop(&p, &pecaRemovidaPilha);
+                printf("Peça [%c, %d], que estava reservada, jogada!\n", pecaRemovidaPilha.tipo, pecaRemovidaPilha.id);
+                mostrarPilha(&p);
                 break;
             case 0:
                 printf("\nSaindo do jogo...");
@@ -111,6 +140,7 @@ void enqueue(Fila *f, Peca p) {
 
 void dequeue(Fila *f, Peca *p) {
     if (filaVazia(f)) {
+        printf("Fila vazia! Não não há peças para jogar.\n");
         return;
     }
 
@@ -138,4 +168,44 @@ Peca gerarPeca() {
     novaPeca.id = proximoId++;
 
     return novaPeca;
+}
+
+void inicializarPilha(Pilha *p) {
+    p->topo = -1;
+}
+
+int pilhaVazia(Pilha *p) {
+    return p->topo == - 1;
+}
+
+int pilhaCheia(Pilha *p) {
+    return p->topo == MAX_PILHA - 1;
+}
+
+void push(Pilha *p, Peca nova) {
+    if (pilhaCheia(p)) {
+        printf("Pilha cheia! Não é possível reservar peça.\n");
+        return;
+    }
+
+    p->topo++;
+    p->itens[p->topo] = nova;
+}
+
+void pop(Pilha *p, Peca *removida) {
+    if (pilhaVazia(p)) {
+        printf("Pilha vazia! Não é possível remover.\n");
+        return;
+    }
+
+    *removida = p->itens[p->topo];
+    p->topo--;
+}
+
+void mostrarPilha(Pilha *p) {
+    printf("Pilha (topo-1> base):\n");
+    for (int i = p->topo; i >= 0; i--) {
+        printf("[%c, %d]\n", p->itens[i].tipo, p->itens[i].id);
+    }
+    printf("\n");
 }
