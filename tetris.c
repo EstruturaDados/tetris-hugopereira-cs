@@ -42,6 +42,9 @@ void push(Pilha *p, Peca nova);
 void pop(Pilha *p, Peca *removida);
 void mostrarPilha(Pilha *p);
 
+void trocaSimples(Fila *f, Pilha *p);
+void trocaTripla(Fila *f, Pilha *p);
+
 
 int main() {
     srand(time(NULL));
@@ -71,6 +74,8 @@ int main() {
         printf("1. Jogar Peça\n");
         printf("2. Reservar Peça\n");
         printf("3. Usar Peça Reservada\n");
+        printf("4. Trocar peça do topo da pilha com a da frente da fila\n");
+        printf("5. Trocar os três primeiros da fila com as três peças da pilha\n");
         printf("0. Sair\n");
         printf("=============================================================\n");
         printf("Escolha uma opção: ");
@@ -97,10 +102,21 @@ int main() {
             case 3:
                 pop(&p, &pecaRemovidaPilha);
                 printf("Peça [%c, %d], que estava reservada, jogada!\n", pecaRemovidaPilha.tipo, pecaRemovidaPilha.id);
+                mostrarFila(&f);
+                mostrarPilha(&p);
+                break;
+            case 4:
+                trocaSimples(&f, &p);
+                mostrarFila(&f);
+                mostrarPilha(&p);
+                break;
+            case 5:
+                trocaTripla(&f, &p);
+                mostrarFila(&f);
                 mostrarPilha(&p);
                 break;
             case 0:
-                printf("\nSaindo do jogo...");
+                printf("\nSaindo do jogo...\n");
                 printf("Até logo!\n");
                 break;
             default:
@@ -140,7 +156,7 @@ void enqueue(Fila *f, Peca p) {
 
 void dequeue(Fila *f, Peca *p) {
     if (filaVazia(f)) {
-        printf("Fila vazia! Não não há peças para jogar.\n");
+        printf("Fila vazia! Não há peças para jogar.\n");
         return;
     }
 
@@ -175,7 +191,7 @@ void inicializarPilha(Pilha *p) {
 }
 
 int pilhaVazia(Pilha *p) {
-    return p->topo == - 1;
+    return p->topo == -1;
 }
 
 int pilhaCheia(Pilha *p) {
@@ -203,9 +219,88 @@ void pop(Pilha *p, Peca *removida) {
 }
 
 void mostrarPilha(Pilha *p) {
-    printf("Pilha (topo-1> base):\n");
-    for (int i = p->topo; i >= 0; i--) {
-        printf("[%c, %d]\n", p->itens[i].tipo, p->itens[i].id);
+    printf("Pilha (topo -> base):\n");
+    if (pilhaVazia(p)) {
+        printf("(vazia)\n");
+    } else {
+        for (int i = p->topo; i >= 0; i--) {
+            printf("[%c, %d]\n", p->itens[i].tipo, p->itens[i].id);
+        }
     }
     printf("\n");
+}
+
+void trocaSimples(Fila *f, Pilha *p) {
+    if (pilhaVazia(p)) {
+        printf("Pilha vazia! Não é possível realizar a troca.\n");
+        return;
+    }
+    
+    if (filaVazia(f)) {
+        printf("Fila vazia! Não é possível realizar a troca.\n");
+        return;
+    }
+    
+    // Remove o topo da pilha
+    Peca auxPilha;
+    pop(p, &auxPilha);
+    
+    // Remove a frente da fila
+    Peca auxFila;
+    dequeue(f, &auxFila);
+    
+    // Insere a peça da fila na pilha
+    push(p, auxFila);
+    
+    // Insere a peça da pilha na frente da fila (ajustando o início)
+    f->inicio = (f->inicio - 1 + MAX_FILA) % MAX_FILA;
+    f->itens[f->inicio] = auxPilha;
+    f->total++;
+    
+    printf("Troca realizada: [%c, %d] da pilha <-> [%c, %d] da fila\n", 
+           auxPilha.tipo, auxPilha.id, auxFila.tipo, auxFila.id);
+}
+
+void trocaTripla(Fila *f, Pilha *p) {
+    // Verifica se a pilha tem exatamente 3 peças
+    if (p->topo < MAX_PILHA - 1) {
+        printf("A pilha precisa ter exatamente 3 peças para realizar a troca!\n");
+        return;
+    }
+    
+    // Verifica se a fila tem pelo menos 3 peças
+    if (f->total < MAX_PILHA) {
+        printf("A fila precisa ter pelo menos 3 peças para realizar a troca!\n");
+        return;
+    }
+    
+    // Array temporário para armazenar as 3 peças da fila
+    Peca filaTemp[MAX_PILHA];
+    
+    // Remove 3 peças da frente da fila
+    for (int i = 0; i < MAX_PILHA; i++) {
+        dequeue(f, &filaTemp[i]);
+    }
+    
+    // Array temporário para armazenar as 3 peças da pilha
+    Peca pilhaTemp[MAX_PILHA];
+    
+    // Remove todas as 3 peças da pilha (do topo para a base)
+    for (int i = 0; i < MAX_PILHA; i++) {
+        pop(p, &pilhaTemp[i]);
+    }
+    
+    // Insere as 3 peças da pilha no início da fila
+    for (int i = MAX_PILHA - 1; i >= 0; i--) {
+        f->inicio = (f->inicio - 1 + MAX_FILA) % MAX_FILA;
+        f->itens[f->inicio] = pilhaTemp[i];
+        f->total++;
+    }
+    
+    // Insere as 3 peças da fila na pilha (a primeira da fila vai para a base da pilha)
+    for (int i = 0; i < MAX_PILHA; i++) {
+        push(p, filaTemp[i]);
+    }
+    
+    printf("Troca completa realizada: 3 peças da fila <-> 3 peças da pilha\n");
 }
